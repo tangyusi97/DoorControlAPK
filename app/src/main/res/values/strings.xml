@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">DoorControl</string>
+    <string name="title">电动门遥控</string>
+    <string name="tip">请长按至电动门响应后再松开</string>
+    <string name="open">开</string>
+    <string name="close">关</string>
+    <string name="stop">停</string>
+    <string name="open_and_close">开一下</string>
+    <string name="no_bluetooth">设备不支持蓝牙</string>
+    <string name="no_permission">未取得权限</string>
+    <string name="advertise_failed">蓝牙广播失败</string>
+</resources>
