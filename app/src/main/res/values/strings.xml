@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DoorControl</string>
+    <string name="app_name">电动门遥控</string>
     <string name="title">电动门遥控</string>
     <string name="tip">请长按至电动门响应后再松开</string>
     <string name="open">开</string>

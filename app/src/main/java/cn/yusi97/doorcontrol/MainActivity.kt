@@ -269,7 +269,9 @@ fun ControlPanel() {
         enabledList[i] = true
     }
 
-    enableAll(hasAdvertisePermission && isBluetoothAdapterEnabled)
+    LaunchedEffect(hasAdvertisePermission, isBluetoothAdapterEnabled) {
+        enableAll(hasAdvertisePermission && isBluetoothAdapterEnabled)
+    }
 
     ControlButton(
         stringResource(R.string.open),
@@ -279,18 +281,18 @@ fun ControlPanel() {
         DoorActionCmd.open
     )
     ControlButton(
-        stringResource(R.string.close),
+        stringResource(R.string.stop),
         enabledList[1],
         { setEnabled(1) },
         { enableAll(true) },
-        DoorActionCmd.close
+        DoorActionCmd.stop
     )
     ControlButton(
-        stringResource(R.string.stop),
+        stringResource(R.string.close),
         enabledList[2],
         { setEnabled(2) },
         { enableAll(true) },
-        DoorActionCmd.stop
+        DoorActionCmd.close
     )
     ControlButton(
         stringResource(R.string.open_and_close),

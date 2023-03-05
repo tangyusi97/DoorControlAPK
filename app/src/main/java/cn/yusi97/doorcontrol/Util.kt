@@ -25,6 +25,7 @@ val Number.th: TextUnit
         return (this.toInt() * height / 800).sp
     }
 
+@Suppress("deprecation")
 object VibrateUtils {
 
     //震动milliseconds毫秒
