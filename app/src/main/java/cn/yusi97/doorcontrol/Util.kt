@@ -18,6 +18,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -75,15 +76,12 @@ enum class MyBleAdvertiserEvent {
     ADVERTISE_PERMISSION, OPEN_BLE
 }
 
-class MyBleAdvertiser(
-    activity: ComponentActivity,
-    private val eventHandler: (event: MyBleAdvertiserEvent, value: Boolean) -> Unit
-) {
-    private val ctx = activity
-    private var advertiseDenied = false
-    private var openBluetoothDenied = false
+class MyBleAdvertiser(context: Context) {
+    private val ctx = context.applicationContext
+
     private val bluetoothAdapter: BluetoothAdapter? =
-        activity.getSystemService(BluetoothManager::class.java).adapter
+        ctx.getSystemService(BluetoothManager::class.java)?.adapter
+
     private var bluetoothLeAdvertiser: BluetoothLeAdvertiser? = null
 
     private val advertiseSettings: AdvertiseSettings = AdvertiseSettings.Builder()
@@ -104,6 +102,26 @@ class MyBleAdvertiser(
         }
     }
 
+    private var advertiseDenied = false
+    private var openBluetoothDenied = false
+    private var eventHandler: (MyBleAdvertiserEvent, Boolean) -> Unit = { _, _ -> }
+    private var requestPermissionLauncher: ActivityResultLauncher<Array<String>>? = null
+    private var openBluetoothLauncher: ActivityResultLauncher<Intent>? = null
+
+    init {
+        setUp()
+    }
+
+    constructor(
+        activity: ComponentActivity,
+        eventHandler: (event: MyBleAdvertiserEvent, value: Boolean) -> Unit
+    ) : this(activity) {
+        this.eventHandler = eventHandler
+        setRequestPermissionLauncher(activity)
+        setOpenBluetoothLauncher(activity)
+        setUp()
+    }
+
     fun setUp() {
         // 检测蓝牙支持
         if (bluetoothAdapter == null) {
@@ -114,7 +132,6 @@ class MyBleAdvertiser(
         // 检查广播权限
         if (!checkAdvertisePermission(!advertiseDenied)) {
             eventHandler(MyBleAdvertiserEvent.ADVERTISE_PERMISSION, false)
-            Toast.makeText(ctx, ctx.getString(R.string.no_permission), Toast.LENGTH_SHORT).show()
             return
         }
         eventHandler(MyBleAdvertiserEvent.ADVERTISE_PERMISSION, true)
@@ -123,7 +140,7 @@ class MyBleAdvertiser(
             eventHandler(MyBleAdvertiserEvent.OPEN_BLE, false)
             if (!openBluetoothDenied && checkOpenBluetoothPermission()) {
                 val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                openBluetoothLauncher.launch(enableBluetoothIntent)
+                openBluetoothLauncher?.launch(enableBluetoothIntent)
             }
             return
         }
@@ -161,7 +178,7 @@ class MyBleAdvertiser(
             ) {
                 return true
             } else if (request == true) {
-                requestPermissionLauncher.launch(
+                requestPermissionLauncher?.launch(
                     arrayOf(Manifest.permission.BLUETOOTH_ADVERTISE)
                 )
             }
@@ -176,7 +193,7 @@ class MyBleAdvertiser(
         ) {
             return true
         } else if (request == true) {
-            requestPermissionLauncher.launch(
+            requestPermissionLauncher?.launch(
                 arrayOf(
                     Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADMIN
@@ -194,7 +211,7 @@ class MyBleAdvertiser(
             ) {
                 return true
             }
-            requestPermissionLauncher.launch(
+            requestPermissionLauncher?.launch(
                 arrayOf(Manifest.permission.BLUETOOTH_CONNECT)
             )
             return false
@@ -202,36 +219,40 @@ class MyBleAdvertiser(
         return true
     }
 
-    private val requestPermissionLauncher = activity.registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        it.forEach { (permission, isGranted) ->
-            when (permission) {
-                Manifest.permission.BLUETOOTH_ADVERTISE,
-                Manifest.permission.BLUETOOTH -> {
-                    if (!isGranted) {
-                        advertiseDenied = true
-                        Toast.makeText(
-                            ctx,
-                            ctx.getString(R.string.no_permission),
-                            Toast.LENGTH_SHORT
-                        ).show()
+    private fun setRequestPermissionLauncher(activity: ComponentActivity) {
+        requestPermissionLauncher = activity.registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) {
+            it.forEach { (permission, isGranted) ->
+                when (permission) {
+                    Manifest.permission.BLUETOOTH_ADVERTISE,
+                    Manifest.permission.BLUETOOTH -> {
+                        if (!isGranted) {
+                            advertiseDenied = true
+                            Toast.makeText(
+                                ctx,
+                                ctx.getString(R.string.no_permission),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
-                }
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.BLUETOOTH_ADMIN -> {
-                    //
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.BLUETOOTH_ADMIN -> {
+                        //
+                    }
                 }
             }
         }
     }
 
-    private val openBluetoothLauncher = activity.registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (it.resultCode == Activity.RESULT_CANCELED) {
-            openBluetoothDenied = true
-            Toast.makeText(ctx, ctx.getString(R.string.no_bluetooth), Toast.LENGTH_SHORT).show()
+    private fun setOpenBluetoothLauncher(activity: ComponentActivity) {
+        openBluetoothLauncher = activity.registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            if (it.resultCode == Activity.RESULT_CANCELED) {
+                openBluetoothDenied = true
+                Toast.makeText(ctx, ctx.getString(R.string.no_bluetooth), Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

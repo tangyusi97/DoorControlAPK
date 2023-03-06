@@ -1,5 +1,6 @@
 package cn.yusi97.doorcontrol
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +25,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 private var hasAdvertisePermission by mutableStateOf(false)
 private var isBluetoothAdapterEnabled by mutableStateOf(false)
 
+@SuppressLint("StaticFieldLeak")
 private lateinit var myBleAdvertiser: MyBleAdvertiser
 private lateinit var myVibrator: MyVibrator
 
