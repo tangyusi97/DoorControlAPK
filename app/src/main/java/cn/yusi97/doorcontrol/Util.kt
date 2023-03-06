@@ -119,7 +119,6 @@ class MyBleAdvertiser(context: Context) {
         this.eventHandler = eventHandler
         setRequestPermissionLauncher(activity)
         setOpenBluetoothLauncher(activity)
-        setUp()
     }
 
     fun setUp() {
