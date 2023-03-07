@@ -40,6 +40,8 @@ val Number.th: TextUnit
         return (this.toInt() * height / 800).sp
     }
 
+data class Hardware(val myBleAdvertiser: MyBleAdvertiser, val myVibrator: MyVibrator)
+
 @Suppress("deprecation")
 class MyVibrator(context: Context) {
 

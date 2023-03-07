@@ -1,6 +1,5 @@
 package cn.yusi97.doorcontrol
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,38 +14,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import cn.yusi97.doorcontrol.ui.theme.AppTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
-
 private var hasAdvertisePermission by mutableStateOf(false)
 private var isBluetoothAdapterEnabled by mutableStateOf(false)
 
-@SuppressLint("StaticFieldLeak")
-private lateinit var myBleAdvertiser: MyBleAdvertiser
-private lateinit var myVibrator: MyVibrator
-
 class MainActivity : ComponentActivity() {
+
+    private val hardware = Hardware(
+        MyBleAdvertiser(this) { event, value ->
+            when (event) {
+                MyBleAdvertiserEvent.ADVERTISE_PERMISSION -> hasAdvertisePermission = value
+                MyBleAdvertiserEvent.OPEN_BLE -> isBluetoothAdapterEnabled = value
+            }
+        },
+        MyVibrator(this)
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
-
-        myVibrator = MyVibrator(this)
-        myBleAdvertiser = MyBleAdvertiser(this) { event, value ->
-            when (event) {
-                MyBleAdvertiserEvent.ADVERTISE_PERMISSION -> {
-                    hasAdvertisePermission = value
-                }
-                MyBleAdvertiserEvent.OPEN_BLE -> {
-                    isBluetoothAdapterEnabled = value
-                }
-            }
-        }
-
         setContent {
             AppTheme {
                 FullScreen()
@@ -54,7 +44,31 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainView()
+                    Column(
+                        modifier = Modifier
+                            .statusBarsPadding()
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Column(
+                            modifier = Modifier.height(300.vh),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Title()
+                        }
+                        Column(
+                            modifier = Modifier.height(550.vh),
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            ControlPanel(hardware)
+                        }
+                        Column(
+                            modifier = Modifier.height(150.vh),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(text = stringResource(R.string.tip), fontSize = 16.th)
+                        }
+                    }
                 }
             }
         }
@@ -62,11 +76,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        myBleAdvertiser.setUp()
+        hardware.myBleAdvertiser.setUp()
     }
 
 }
-
 
 @Composable
 fun FullScreen() {
@@ -74,40 +87,6 @@ fun FullScreen() {
     val useDarkIcons = !isSystemInDarkTheme()
     SideEffect {
         systemUiController.setSystemBarsColor(Color.Transparent, darkIcons = useDarkIcons)
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    AppTheme {
-        MainView()
-    }
-}
-
-@Composable
-fun MainView() {
-    Column(
-        modifier = Modifier
-            .statusBarsPadding()
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Column(
-            modifier = Modifier.height(300.vh), verticalArrangement = Arrangement.Center
-        ) {
-            Title()
-        }
-        Column(
-            modifier = Modifier.height(550.vh), verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            ControlPanel()
-        }
-        Column(
-            modifier = Modifier.height(150.vh), verticalArrangement = Arrangement.Center
-        ) {
-            Text(text = stringResource(R.string.tip), fontSize = 16.th)
-        }
     }
 }
 
@@ -122,7 +101,7 @@ fun Title() {
 }
 
 @Composable
-fun ControlPanel() {
+fun ControlPanel(hardware: Hardware) {
     val enabledList = remember { mutableStateListOf(false, false, false, false) }
     var disabled by remember { mutableStateOf(false) }
 
@@ -147,21 +126,24 @@ fun ControlPanel() {
         enabled = enabledList[0],
         setEnabled = { setEnabled(0) },
         resetEnabled = { enableAll(true) },
-        cmdData = DoorActionCmd.open
+        cmdData = DoorActionCmd.open,
+        hardware = hardware
     )
     ControlButton(
         name = stringResource(R.string.stop),
         enabled = enabledList[1],
         setEnabled = { setEnabled(1) },
         resetEnabled = { enableAll(true) },
-        cmdData = DoorActionCmd.stop
+        cmdData = DoorActionCmd.stop,
+        hardware = hardware
     )
     ControlButton(
         name = stringResource(R.string.close),
         enabled = enabledList[2],
         setEnabled = { setEnabled(2) },
         resetEnabled = { enableAll(true) },
-        cmdData = DoorActionCmd.close
+        cmdData = DoorActionCmd.close,
+        hardware = hardware
     )
     ControlButton(
         name = stringResource(R.string.open_and_close),
@@ -169,7 +151,8 @@ fun ControlPanel() {
         setEnabled = { setEnabled(3) },
         resetEnabled = { enableAll(true) },
         cmdData = DoorActionCmd.openAndClose,
-        true
+        primary = true,
+        hardware = hardware,
     )
 }
 
@@ -181,24 +164,25 @@ fun ControlButton(
     resetEnabled: () -> Unit,
     cmdData: ByteArray,
     primary: Boolean? = false,
+    hardware: Hardware
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressState by interactionSource.collectIsPressedAsState()
     DisposableEffect(pressState) {
         if (pressState) {
             setEnabled()
-            myBleAdvertiser.advertiseCommand(cmdData)
-            myVibrator.vibrate(longArrayOf(0, 50, 250), 0)
+            hardware.myBleAdvertiser.advertiseCommand(cmdData)
+            hardware.myVibrator.vibrate(longArrayOf(0, 50, 250), 0)
 
         } else {
             resetEnabled()
-            myBleAdvertiser.advertiseCancel()
-            myVibrator.cancel()
+            hardware.myBleAdvertiser.advertiseCancel()
+            hardware.myVibrator.cancel()
         }
 
         onDispose {
-            myBleAdvertiser.advertiseCancel()
-            myVibrator.cancel()
+            hardware.myBleAdvertiser.advertiseCancel()
+            hardware.myVibrator.cancel()
         }
     }
 
@@ -220,5 +204,4 @@ fun ControlButton(
         )
     }
 }
-
 
