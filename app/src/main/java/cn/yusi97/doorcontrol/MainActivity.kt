@@ -1,8 +1,11 @@
 package cn.yusi97.doorcontrol
 
+import android.appwidget.AppWidgetManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -14,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import cn.yusi97.doorcontrol.ui.theme.AppTheme
@@ -68,9 +72,29 @@ class MainActivity : ComponentActivity() {
                         }
                         Column(
                             modifier = Modifier.height(150.vh),
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(text = stringResource(R.string.tip), fontSize = 16.th)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(2.dp),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    modifier = Modifier.clickable { pinWidgets() },
+                                    text = "添加小组件",
+                                    fontSize = 10.th,
+                                    textDecoration = TextDecoration.Underline,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                                Text(
+                                    modifier = Modifier.padding(12.dp, 0.dp, 0.dp, 0.dp),
+                                    text = "© 2023 Yusi",
+                                    fontSize = 10.th,
+                                )
+                            }
                         }
                     }
                 }
@@ -83,7 +107,14 @@ class MainActivity : ComponentActivity() {
         hardware.myBleAdvertiser.setUp()
     }
 
+    private fun pinWidgets() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            AppWidgetManager.getInstance(this)
+                .getInstalledProvidersForPackage(packageName, null).last().pin(this)
+        }
+    }
 }
+
 
 @Composable
 fun FullScreen() {

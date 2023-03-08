@@ -1,6 +1,12 @@
 package cn.yusi97.doorcontrol
 
+import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.*
 import androidx.glance.*
@@ -319,4 +325,14 @@ class ControlPanelWidgetReceiver : GlanceAppWidgetReceiver() {
 
 class IconWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = IconWidget()
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun AppWidgetProviderInfo.pin(context: Context) {
+    val successCallback = PendingIntent.getBroadcast(
+        context, 0, Intent(),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    AppWidgetManager.getInstance(context).requestPinAppWidget(provider, null, successCallback)
 }
