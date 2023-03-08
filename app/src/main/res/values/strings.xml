@@ -9,4 +9,6 @@
     <string name="no_bluetooth">未打开蓝牙</string>
     <string name="no_permission">未取得权限</string>
     <string name="advertise_failed">蓝牙广播失败</string>
+    <string name="control_panel">控制面板</string>
+    <string name="control_icon">快捷图标</string>
 </resources>

@@ -14,12 +14,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Build
+import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -53,8 +55,9 @@ class MyVibrator(context: Context) {
         context.getSystemService(VIBRATOR_SERVICE) as Vibrator
     }
 
-    fun vibrate(milliseconds: Long) {
-        vib.vibrate(milliseconds)
+    @RequiresApi(Build.VERSION_CODES.Q)
+    fun vibrateClick() {
+        vib.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
     }
 
     /**
@@ -85,13 +88,6 @@ class MyBleAdvertiser(context: Context) {
         ctx.getSystemService(BluetoothManager::class.java)?.adapter
 
     private var bluetoothLeAdvertiser: BluetoothLeAdvertiser? = null
-
-    private val advertiseSettings: AdvertiseSettings = AdvertiseSettings.Builder()
-        .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-        .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-        .setTimeout(0)
-        .setConnectable(false)
-        .build()
 
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
@@ -150,7 +146,7 @@ class MyBleAdvertiser(context: Context) {
         bluetoothLeAdvertiser = bluetoothAdapter.bluetoothLeAdvertiser
     }
 
-    fun advertiseCommand(cmdData: ByteArray) {
+    fun advertiseCommand(cmdData: ByteArray, timeout: Int = 0) {
         if (bluetoothAdapter?.isEnabled != true) {
             eventHandler(MyBleAdvertiserEvent.OPEN_BLE, false)
             Toast.makeText(ctx, ctx.getString(R.string.no_bluetooth), Toast.LENGTH_SHORT).show()
@@ -161,6 +157,11 @@ class MyBleAdvertiser(context: Context) {
             eventHandler(MyBleAdvertiserEvent.ADVERTISE_PERMISSION, false)
             Toast.makeText(ctx, ctx.getString(R.string.no_permission), Toast.LENGTH_SHORT).show()
         }
+        val advertiseSettings: AdvertiseSettings = AdvertiseSettings.Builder()
+            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+            .setTimeout(timeout)
+            .build()
         bluetoothLeAdvertiser?.startAdvertising(advertiseSettings, data, advertiseCallback)
     }
 

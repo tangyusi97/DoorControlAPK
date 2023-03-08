@@ -24,19 +24,23 @@ private var isBluetoothAdapterEnabled by mutableStateOf(false)
 
 class MainActivity : ComponentActivity() {
 
-    private val hardware = Hardware(
-        MyBleAdvertiser(this) { event, value ->
-            when (event) {
-                MyBleAdvertiserEvent.ADVERTISE_PERMISSION -> hasAdvertisePermission = value
-                MyBleAdvertiserEvent.OPEN_BLE -> isBluetoothAdapterEnabled = value
-            }
-        },
-        MyVibrator(this)
-    )
+    private lateinit var hardware: Hardware
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
+
+        hardware = Hardware(
+            MyBleAdvertiser(this) { event, value ->
+                when (event) {
+                    MyBleAdvertiserEvent.ADVERTISE_PERMISSION -> hasAdvertisePermission = value
+                    MyBleAdvertiserEvent.OPEN_BLE -> isBluetoothAdapterEnabled = value
+                }
+            },
+            MyVibrator(this)
+        )
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         setContent {
             AppTheme {
                 FullScreen()

@@ -17,8 +17,8 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/my_launcher"
-        android:roundIcon="@mipmap/my_launcher_round"
         android:label="@string/app_name"
+        android:roundIcon="@mipmap/my_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DoorControl"
         android:windowSoftInputMode="adjustResize"
@@ -26,14 +26,35 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.DoorControl">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".ControlPanelWidgetReceiver"
+            android:exported="false"
+            android:label="@string/control_panel">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/control_widget" />
+        </receiver>
+        <receiver
+            android:name=".IconWidgetReceiver"
+            android:exported="false"
+            android:label="@string/control_icon">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/control_widget" />
+        </receiver>
     </application>
 
 </manifest>
